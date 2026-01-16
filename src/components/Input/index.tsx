@@ -4,6 +4,6 @@ import {styles} from './styles'
 
 export function Input ({...rest}: TextInputProps){
     return (
-        <TextInput {...rest} style={styles.container}/>
+        <TextInput {...rest} placeholderTextColor="#74798b" style={styles.container}/>
     )
 }
