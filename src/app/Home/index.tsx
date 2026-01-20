@@ -1,4 +1,5 @@
-import { View, Image, TouchableOpacity, Text, ScrollView, FlatList } from 'react-native';
+import { View, Image, TouchableOpacity, Text, ScrollView, FlatList, Alert } from 'react-native';
+import { useState, useEffect } from 'react';
 
 import { Button }from '@/components/Button'
 import {Input } from '@/components/Input'
@@ -7,44 +8,64 @@ import { Filter } from '@/components/Filter';
 import { styles } from './styles';
 import { FilterStatus } from '@/types/FilterStatus';
 import { Item } from '@/components/item';
+import { itemsStorage, ItemStorage } from '@/storage/itemsStorange';
+
 
 const FILTER_STATUS: FilterStatus[] = [FilterStatus.DONE, FilterStatus.PENDING]
-const ITEMS = [
-  {
-    id: "1 ",
-    status: FilterStatus.DONE,
-    descrption: "2 kg de arroz"
-  },
-  {
-    id: "2",
-    status: FilterStatus.PENDING,
-    descrption: "2 kg de açucar"
-  },
-  {
-    id: "3",
-    status: FilterStatus.DONE,
-    descrption: "2 kg de feiijao"
-  },
-  {
-    id: "4 ",
-    status: FilterStatus.DONE,
-    descrption: "2 kg de macarrão"
-  }
-]
 
 export function Home() {
+const [items, setItems] = useState<ItemStorage[]>([])
+const [filter, setFilter]= useState(FilterStatus.PENDING)
+const [ description, setDescription] = useState("")
+
+async function handleAdd(){
+  if (!description.trim()){
+    return Alert.alert("Adicionar", "Adicione uma descrição")
+  }
+  const newItem = {
+    id: Math.random().toString(36).substring(2),
+    description,
+    status: FilterStatus.PENDING
+  }
+  await itemsStorage.add(newItem)
+  await itemByStatus()   
+
+  setFilter(FilterStatus.PENDING)
+  Alert.alert("Adicionado", `Adicionado ${description}`)
+  setDescription("")
+}
+
+async function itemByStatus() {
+  try {
+    const response = await itemsStorage.getByStatus(filter)
+    console.log(response)
+    setItems(response)
+  }catch(error){
+    console.log(error)
+    Alert.alert("Erro", "Não foi possivel filtrar items")
+  }
+  
+}
+useEffect(()=>{
+  itemByStatus()
+},[filter])
+
   return (
     <View style={styles.container}>
       <Image style={styles.logo} source={require("@/assets/logo.png")} />
 
       <View style={styles.form}>
-        <Input placeholder='O que você precisa comprar?'/>
-        <Button title='Adicionar' onPress={()=> console.log("ok")}/>
+        <Input placeholder='O que você precisa comprar?'
+        onChangeText={setDescription}
+        value={description}/>
+        <Button title='Adicionar' onPress={handleAdd}/>
       </View>
       <View style={styles.content}>
         <View style={styles.header}>
           { FILTER_STATUS.map((status)=> (
-          <Filter key={status} status={status} isActive/>
+          <Filter key={status} status={status} isActive ={status === filter}
+          onPress={() => setFilter(status)}
+          />
           )
           )}
           <TouchableOpacity style={styles.clearButton}>
@@ -52,10 +73,10 @@ export function Home() {
           </TouchableOpacity>
         </View>
       <FlatList
-      data={ITEMS}
+      data={items}
       keyExtractor={(item)=> item.id}
       renderItem={({item})=>(
-        <Item data={{status: item.status, description: item.descrption }}
+        <Item data={item}
         onRemove={()=> console.log("remove")}
         onStatus={()=> console.log("Troca")}
         />

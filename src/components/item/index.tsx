@@ -17,7 +17,7 @@ type Props = {
 
 }
 
-export function Item ({data, onRemove, onStatus}:Props){
+export function Item ({data, onRemove, onStatus} :Props){
     return (
         <View style={styles.container}>
             <TouchableOpacity activeOpacity={0.8} onPress={onStatus}>
