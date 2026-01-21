@@ -38,7 +38,6 @@ async function handleAdd(){
 async function itemByStatus() {
   try {
     const response = await itemsStorage.getByStatus(filter)
-    console.log(response)
     setItems(response)
   }catch(error){
     console.log(error)
@@ -46,6 +45,49 @@ async function itemByStatus() {
   }
   
 }
+async function handleRemove(id:string) {
+  try {
+    await itemsStorage.remove(id)
+    await itemByStatus()
+    
+  } catch (error) {
+    console.log(error)
+    Alert.alert("Remover", "Não foi possivel remover esse item")
+  }
+  
+}
+function handleClear(){
+  Alert.alert("Limpar", "Deseja remover todos os itema?", [
+    {
+      text: "Não", style: "cancel"
+    },
+    { 
+      text: "Sim", onPress:() => onClear()
+     }
+  ])
+}
+
+async function onClear() {
+  try {
+    await itemsStorage.clear()
+    setItems([])
+  } catch (error) {
+    console.log(error)
+    Alert.alert("Erro", "Não foi possivel")  
+  } 
+}
+
+async function handleToogleStatus(id: string) {
+  try {
+    await itemsStorage.toogleStatus(id)
+    await itemByStatus()
+  } catch (error) {
+    Alert.alert("Erro", "Não foi possivel mudar o status")
+    
+  }
+  
+}
+
 useEffect(()=>{
   itemByStatus()
 },[filter])
@@ -68,7 +110,7 @@ useEffect(()=>{
           />
           )
           )}
-          <TouchableOpacity style={styles.clearButton}>
+          <TouchableOpacity onPress={handleClear} style={styles.clearButton}>
             <Text style={styles.clearText}>Limpar</Text>
           </TouchableOpacity>
         </View>
@@ -77,8 +119,8 @@ useEffect(()=>{
       keyExtractor={(item)=> item.id}
       renderItem={({item})=>(
         <Item data={item}
-        onRemove={()=> console.log("remove")}
-        onStatus={()=> console.log("Troca")}
+        onRemove={()=> handleRemove(item.id)}
+        onStatus={()=> handleToogleStatus(item.id)}
         />
       )}
       showsHorizontalScrollIndicator={false}
